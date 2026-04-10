@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BankAPI — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0c0f;
+      --surface: #111418;
+      --surface2: #181c22;
+      --border: #1e242d;
+      --border2: #252d38;
+      --green: #00d084;
+      --green-dim: #00d08422;
+      --red: #ff4d4d;
+      --red-dim: #ff4d4d1a;
+      --amber: #f5a623;
+      --amber-dim: #f5a6231a;
+      --blue: #4a9eff;
+      --blue-dim: #4a9eff18;
+      --text: #e8edf3;
+      --text2: #6b7a8d;
+      --text3: #3d4a58;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* header */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text);
+    }
+    .logo span { color: var(--green); }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      display: inline-block;
+      margin-right: 6px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .api-status { font-family: var(--mono); font-size: 11px; color: var(--text2); display:flex; align-items:center; }
+
+    /* layout */
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+    /* top stat strip */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .stat {
+      background: var(--surface);
+      padding: 1.25rem 1.5rem;
+      transition: background 0.2s;
+    }
+    .stat:hover { background: var(--surface2); }
+    .stat-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--text2); text-transform: uppercase; margin-bottom: 6px; }
+    .stat-value { font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--text); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+
+    /* main grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } .stat-strip { grid-template-columns: 1fr; } }
+
+    /* panel */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+    .panel-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .dot-green { background: var(--green); }
+    .dot-blue  { background: var(--blue); }
+    .dot-amber { background: var(--amber); }
+    .dot-red   { background: var(--red); }
+    .panel-body { padding: 1.25rem; }
+
+    /* form elements */
+    .field { margin-bottom: 1rem; }
+    label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--text2); text-transform: uppercase; margin-bottom: 6px; }
+    input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 9px 12px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: var(--green); }
+    input::placeholder { color: var(--text3); }
+
+    .btn {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 4px;
+      border: none;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-green  { background: var(--green);  color: #000; }
+    .btn-blue   { background: var(--blue);   color: #000; }
+    .btn-amber  { background: var(--amber);  color: #000; }
+    .btn-red    { background: var(--red);    color: #fff; }
+    .btn:hover:not(:disabled) { opacity: 0.85; }
+
+    /* response box */
+    .response-box {
+      margin-top: 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      min-height: 52px;
+      color: var(--text2);
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+    .response-box.success { border-color: var(--green); color: var(--green); background: var(--green-dim); display: block; }
+    .response-box.error   { border-color: var(--red);   color: var(--red);   background: var(--red-dim);   display: block; }
+    .response-box.warn    { border-color: var(--amber);  color: var(--amber);  background: var(--amber-dim); display: block; }
+    .response-box.info    { border-color: var(--blue);   color: var(--blue);   background: var(--blue-dim);  display: block; }
+
+    /* log panel spans full width */
+    .full-width { grid-column: 1 / -1; }
+    .log-list { list-style: none; max-height: 260px; overflow-y: auto; }
+    .log-list::-webkit-scrollbar { width: 4px; }
+    .log-list::-webkit-scrollbar-track { background: transparent; }
+    .log-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    .log-item {
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 12px;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .log-item:last-child { border-bottom: none; }
+    .log-time { color: var(--text3); min-width: 70px; font-size: 11px; }
+    .log-method { min-width: 52px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; padding: 1px 6px; border-radius: 3px; text-align: center; }
+    .log-method.POST { background: var(--blue-dim); color: var(--blue); }
+    .log-method.GET  { background: var(--green-dim); color: var(--green); }
+    .log-msg { color: var(--text2); flex: 1; }
+    .log-status { font-size: 11px; }
+    .log-status.ok   { color: var(--green); }
+    .log-status.err  { color: var(--red); }
+    .log-status.warn { color: var(--amber); }
+    .empty-log { color: var(--text3); font-family: var(--mono); font-size: 12px; padding: 1rem 0; }
+
+    /* balance lookup panel */
+    .balance-display {
+      margin-top: 1rem;
+      display: none;
+      background: var(--bg);
+      border: 1px solid var(--green);
+      border-radius: 6px;
+      padding: 1.25rem;
+    }
+    .balance-display.show { display: block; }
+    .balance-name { font-size: 13px; color: var(--text2); font-family: var(--mono); margin-bottom: 4px; }
+    .balance-amount { font-family: var(--mono); font-size: 32px; font-weight: 600; color: var(--green); }
+    .balance-id { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 4px; letter-spacing: 0.08em; }
+
+    /* fraud badge */
+    .fraud-badge {
+      display: inline-block;
+      background: var(--amber-dim);
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      border-radius: 3px;
+      margin-top: 8px;
+    }
+
+    .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BANK<span>API</span> // DASHBOARD</div>
+  <div class="api-status"><span class="status-dot" id="statusDot"></span><span id="statusText">connecting...</span></div>
+</header>
+
+<div class="container">
+
+  <!-- stat strip -->
+  <div class="stat-strip">
+    <div class="stat">
+      <div class="stat-label">Total Accounts</div>
+      <div class="stat-value" id="statAccounts">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Last Balance Checked</div>
+      <div class="stat-value green" id="statLastBalance">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Fraud Flags This Session</div>
+      <div class="stat-value red" id="statFraud">0</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- Create Account -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-dot dot-blue"></span>Create Account</div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Account ID</label>
+          <input type="text" id="ca-id" placeholder="e.g. ACC001" />
+        </div>
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="ca-name" placeholder="e.g. Arjun Kumar" />
+        </div>
+        <button class="btn btn-blue" onclick="createAccount()">CREATE ACCOUNT</button>
+        <div class="response-box" id="ca-res"></div>
+      </div>
+    </div>
+
+    <!-- Check Balance -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-dot dot-green"></span>Check Balance</div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Account ID</label>
+          <input type="text" id="bal-id" placeholder="e.g. ACC001" />
+        </div>
+        <button class="btn btn-green" onclick="checkBalance()">GET BALANCE</button>
+        <div class="balance-display" id="bal-display">
+          <div class="balance-name" id="bal-name"></div>
+          <div class="balance-amount" id="bal-amount"></div>
+          <div class="balance-id" id="bal-acc-id"></div>
+        </div>
+        <div class="response-box" id="bal-res"></div>
+      </div>
+    </div>
+
+    <!-- Deposit -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-dot dot-green"></span>Deposit</div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Account ID</label>
+          <input type="text" id="dep-id" placeholder="e.g. ACC001" />
+        </div>
+        <div class="field">
+          <label>Amount (₹)</label>
+          <input type="number" id="dep-amt" placeholder="e.g. 10000" min="1" />
+        </div>
+        <button class="btn btn-green" onclick="doDeposit()">DEPOSIT FUNDS</button>
+        <div class="response-box" id="dep-res"></div>
+      </div>
+    </div>
+
+    <!-- Withdraw -->
+    <div class="panel">
+      <div class="panel-header"><span class="panel-dot dot-red"></span>Withdraw</div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Account ID</label>
+          <input type="text" id="wd-id" placeholder="e.g. ACC001" />
+        </div>
+        <div class="field">
+          <label>Amount (₹)</label>
+          <input type="number" id="wd-amt" placeholder="e.g. 5000" min="1" />
+        </div>
+        <button class="btn btn-red" onclick="doWithdraw()">WITHDRAW FUNDS</button>
+        <div class="response-box" id="wd-res"></div>
+      </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="panel full-width">
+      <div class="panel-header"><span class="panel-dot dot-amber"></span>Activity Log <span style="margin-left:auto;cursor:pointer;color:var(--text3)" onclick="clearLog()">CLEAR</span></div>
+      <div class="panel-body">
+        <ul class="log-list" id="logList">
+          <li class="empty-log">No activity yet. Make a request above.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = 'http://localhost:5000';
+  let accountCount = 0;
+  let fraudCount = 0;
+  let logEntries = [];
+
+  async function checkHealth() {
+    try {
+      const r = await fetch(`${API}/health`);
+      if (r.ok) {
+        document.getElementById('statusDot').style.background = 'var(--green)';
+        document.getElementById('statusDot').style.boxShadow = '0 0 6px var(--green)';
+        document.getElementById('statusText').textContent = 'API ONLINE';
+        document.getElementById('statusText').style.color = 'var(--green)';
+      }
+    } catch {
+      document.getElementById('statusDot').style.background = 'var(--red)';
+      document.getElementById('statusDot').style.boxShadow = '0 0 6px var(--red)';
+      document.getElementById('statusText').textContent = 'API OFFLINE — start flask app';
+      document.getElementById('statusText').style.color = 'var(--red)';
+    }
+  }
+
+  function showRes(id, type, text) {
+    const el = document.getElementById(id);
+    el.className = `response-box ${type}`;
+    el.textContent = text;
+  }
+
+  function addLog(method, msg, statusClass) {
+    const list = document.getElementById('logList');
+    const empty = list.querySelector('.empty-log');
+    if (empty) empty.remove();
+
+    const now = new Date();
+    const time = now.toTimeString().slice(0,8);
+    const li = document.createElement('li');
+    li.className = 'log-item';
+    li.innerHTML = `
+      <span class="log-time">${time}</span>
+      <span class="log-method ${method}">${method}</span>
+      <span class="log-msg">${msg}</span>
+      <span class="log-status ${statusClass}">${statusClass === 'ok' ? '200' : statusClass === 'warn' ? '200⚠' : 'ERR'}</span>
+    `;
+    list.prepend(li);
+  }
+
+  function clearLog() {
+    document.getElementById('logList').innerHTML = '<li class="empty-log">No activity yet. Make a request above.</li>';
+  }
+
+  async function createAccount() {
+    const id = document.getElementById('ca-id').value.trim();
+    const name = document.getElementById('ca-name').value.trim();
+    if (!id || !name) { showRes('ca-res','error','⚠ Both account_id and name are required.'); return; }
+    try {
+      const r = await fetch(`${API}/account`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({account_id: id, name})
+      });
+      const d = await r.json();
+      if (r.ok) {
+        showRes('ca-res','success', `✓ Account created\n  ID: ${d.account_id}`);
+        accountCount++;
+        document.getElementById('statAccounts').textContent = accountCount;
+        addLog('POST', `Created account ${id} (${name})`, 'ok');
+      } else {
+        showRes('ca-res','error', `✗ ${d.error}`);
+        addLog('POST', `Create account failed: ${d.error}`, 'err');
+      }
+    } catch { showRes('ca-res','error','✗ Cannot reach API. Is Flask running on port 5000?'); }
+  }
+
+  async function checkBalance() {
+    const id = document.getElementById('bal-id').value.trim();
+    if (!id) { showRes('bal-res','error','⚠ Account ID is required.'); return; }
+    document.getElementById('bal-display').classList.remove('show');
+    document.getElementById('bal-res').className = 'response-box';
+    try {
+      const r = await fetch(`${API}/balance/${id}`);
+      const d = await r.json();
+      if (r.ok) {
+        document.getElementById('bal-name').textContent = d.name;
+        document.getElementById('bal-amount').textContent = `₹${d.balance.toLocaleString('en-IN')}`;
+        document.getElementById('bal-acc-id').textContent = `ACCOUNT // ${d.account_id}`;
+        document.getElementById('bal-display').classList.add('show');
+        document.getElementById('statLastBalance').textContent = `₹${d.balance.toLocaleString('en-IN')}`;
+        addLog('GET', `Balance check: ${id} → ₹${d.balance.toLocaleString('en-IN')}`, 'ok');
+      } else {
+        showRes('bal-res','error', `✗ ${d.error}`);
+        addLog('GET', `Balance check failed: ${d.error}`, 'err');
+      }
+    } catch { showRes('bal-res','error','✗ Cannot reach API. Is Flask running on port 5000?'); }
+  }
+
+  async function doDeposit() {
+    const id = document.getElementById('dep-id').value.trim();
+    const amt = parseFloat(document.getElementById('dep-amt').value);
+    if (!id || !amt) { showRes('dep-res','error','⚠ Account ID and amount are required.'); return; }
+    try {
+      const r = await fetch(`${API}/deposit`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({account_id: id, amount: amt})
+      });
+      const d = await r.json();
+      if (r.ok) {
+        if (d.warning) {
+          showRes('dep-res','warn', `⚠ FRAUD FLAG\n${d.warning}\n\nNew balance: ₹${d.new_balance.toLocaleString('en-IN')}`);
+          fraudCount++;
+          document.getElementById('statFraud').textContent = fraudCount;
+          addLog('POST', `Deposit ₹${amt.toLocaleString('en-IN')} → ${id} [FLAGGED]`, 'warn');
+        } else {
+          showRes('dep-res','success', `✓ Deposit successful\n  New balance: ₹${d.new_balance.toLocaleString('en-IN')}`);
+          addLog('POST', `Deposit ₹${amt.toLocaleString('en-IN')} → ${id}`, 'ok');
+        }
+      } else {
+        showRes('dep-res','error', `✗ ${d.error}`);
+        addLog('POST', `Deposit failed: ${d.error}`, 'err');
+      }
+    } catch { showRes('dep-res','error','✗ Cannot reach API. Is Flask running on port 5000?'); }
+  }
+
+  async function doWithdraw() {
+    const id = document.getElementById('wd-id').value.trim();
+    const amt = parseFloat(document.getElementById('wd-amt').value);
+    if (!id || !amt) { showRes('wd-res','error','⚠ Account ID and amount are required.'); return; }
+    try {
+      const r = await fetch(`${API}/withdraw`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({account_id: id, amount: amt})
+      });
+      const d = await r.json();
+      if (r.ok) {
+        if (d.warning) {
+          showRes('wd-res','warn', `⚠ FRAUD FLAG\n${d.warning}\n\nNew balance: ₹${d.new_balance.toLocaleString('en-IN')}`);
+          fraudCount++;
+          document.getElementById('statFraud').textContent = fraudCount;
+          addLog('POST', `Withdraw ₹${amt.toLocaleString('en-IN')} from ${id} [FLAGGED]`, 'warn');
+        } else {
+          showRes('wd-res','success', `✓ Withdrawal successful\n  New balance: ₹${d.new_balance.toLocaleString('en-IN')}`);
+          addLog('POST', `Withdraw ₹${amt.toLocaleString('en-IN')} from ${id}`, 'ok');
+        }
+      } else {
+        showRes('wd-res','error', `✗ ${d.error}`);
+        addLog('POST', `Withdraw failed: ${d.error}`, 'err');
+      }
+    } catch { showRes('wd-res','error','✗ Cannot reach API. Is Flask running on port 5000?'); }
+  }
+
+  checkHealth();
+  setInterval(checkHealth, 10000);
+</script>
+</body>
+</html>

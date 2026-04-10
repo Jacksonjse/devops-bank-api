@@ -1,8 +1,27 @@
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, send_from_directory
 import sqlite3
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='templates')
+
+
+@app.after_request
+def add_cors(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    return response
+
+
+@app.route('/', methods=['GET'])
+def index():
+    return send_from_directory('templates', 'index.html')
+
+
+@app.route('/', methods=['OPTIONS'])
+@app.route('/<path:path>', methods=['OPTIONS'])
+def options_handler(path=''):
+    return '', 204
 DB_PATH = os.environ.get("DB_PATH", "bank.db")
 FRAUD_THRESHOLD = 50000
 

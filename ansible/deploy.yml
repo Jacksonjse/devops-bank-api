@@ -4,79 +4,44 @@
   become: true
 
   vars:
-    docker_image: "your-dockerhub-username/bank-api:latest"
+    docker_image: "bank-api:latest"
     container_name: "bank-api"
     app_port: 5000
+    project_path: "/media/jackson/Windows-SSD/Users/Jackson Jesse/Desktop/DEVOPS PROJECT"
 
   tasks:
-    # ── Install Docker ─────────────────────────────────────────────────
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
-
-    - name: Install required packages
-      apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - gnupg
-          - lsb-release
-        state: present
-
-    - name: Add Docker GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-
-    - name: Add Docker repository
-      apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-        state: present
-
-    - name: Install Docker CE
-      apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-        state: present
-        update_cache: yes
-
-    - name: Start and enable Docker service
-      service:
-        name: docker
-        state: started
-        enabled: yes
-
     # ── Deploy Application ─────────────────────────────────────────────
-    - name: Pull latest Docker image
-      community.docker.docker_image:
-        name: "{{ docker_image }}"
-        source: pull
-        force_source: yes
+    - name: Build or pull Docker image
+      shell: |
+        # Build from project directory
+        if [ -f {{ project_path }}/Dockerfile ]; then
+          docker build -t {{ docker_image }} {{ project_path }}
+        else
+          echo "Dockerfile not found at {{ project_path }}"
+        fi
 
     - name: Stop existing container (if running)
-      community.docker.docker_container:
-        name: "{{ container_name }}"
-        state: absent
+      shell: |
+        docker stop {{ container_name }} 2>/dev/null || true
+        docker rm {{ container_name }} 2>/dev/null || true
 
     - name: Run Bank API container
-      community.docker.docker_container:
-        name: "{{ container_name }}"
-        image: "{{ docker_image }}"
-        state: started
-        restart_policy: unless-stopped
-        ports:
-          - "{{ app_port }}:5000"
-        volumes:
-          - bank-data:/data
+      shell: |
+        docker run -d \
+          --name {{ container_name }} \
+          --restart unless-stopped \
+          -p {{ app_port }}:5000 \
+          -v bank-data:/data \
+          {{ docker_image }}
+
+    - name: Wait for container to start
+      pause:
+        seconds: 2
 
     - name: Verify container is running
-      command: docker ps --filter "name={{ container_name }}" --format "{{ '{{' }}.Status{{ '}}' }}"
+      shell: docker ps --filter "name={{ container_name }}" --format "table {%raw%}{{.ID}}\t{{.Status}}{%endraw%}"
       register: container_status
 
     - name: Print container status
       debug:
-        msg: "Container status: {{ container_status.stdout }}"
+        msg: "Container status:\n{{ container_status.stdout }}"

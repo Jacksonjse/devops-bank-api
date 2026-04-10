@@ -2,9 +2,9 @@ name: Bank API CI/CD Pipeline
 
 on:
   push:
-    branches: [main, dev]
+    branches: [master, dev]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   # ── Stage 1: Build & Lint ──────────────────────────────────────────────
@@ -59,7 +59,7 @@ jobs:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout code

@@ -22,6 +22,8 @@ def index():
 @app.route('/<path:path>', methods=['OPTIONS'])
 def options_handler(path=''):
     return '', 204
+
+
 DB_PATH = os.environ.get("DB_PATH", "bank.db")
 FRAUD_THRESHOLD = 50000
 

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: bank-api
-          image: your-dockerhub-username/bank-api:latest
+          image: jksonjse/bank-api:latest
           ports:
             - containerPort: 5000
           env:
